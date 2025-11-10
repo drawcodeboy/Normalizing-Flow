@@ -27,4 +27,4 @@ for i, w in enumerate(np.linspace(start=-4, stop=4, num=height)):
         array[i][j] = energy_func(np.array([h, w]), order =2)
 
 plt.imshow(array, cmap='jet')
-plt.show()
+plt.savefig('subtasks/01_energy_func/output.png', dpi=500)
