@@ -1,0 +1,36 @@
+title: Train Normalizing Flow (DLGM + NF k=10) on Binarized MNIST
+
+device: &device cpu
+parallel: false
+
+task:
+  object: train_nf
+
+data:
+  train:
+    name: binarized_mnist
+    root: data/
+    download: true
+    mode: train
+
+model:
+  name: normalizing_flow
+  input_dim: 784
+  hidden_dim: 400
+  latent_dim: 40
+  maxout_window_size: 4
+  n_flows: 10
+  flow_type: planar
+
+hyperparameters:
+  optim: RMSprop
+  momentum: 0.9
+  lr: 0.00001
+  epochs: 1000
+  max_update_count: 500000
+  batch_size: 100
+
+save:
+  name: dlgm.nf10.mnist
+  weights_path: saved/weights
+  loss_path: saved/loss
