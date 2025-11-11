@@ -8,13 +8,15 @@ from .flow import PlanarFlow
 
 class NormalizingFlow(nn.Module):
     '''
-    
+    Normalizing Flow
+    "Variational Inference with Normalizing Flows" (Rezende & Mohamed, 2015)
+    https://arxiv.org/abs/1505.05770
     '''
     def __init__(self,
                  input_dim: int = 784,
                  hidden_dim: int = 400,
                  latent_dim: int = 40,
-                 maxout_window_size: int = 4,
+                 maxout_window_size: int = 4, # maxout activation function
                  n_flows: int = 10,
                  flow_type: str = 'planar'):
         super().__init__()
