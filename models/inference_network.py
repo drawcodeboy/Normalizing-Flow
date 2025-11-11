@@ -27,8 +27,6 @@ class InferenceNetwork(nn.Module):
 
         # (B, D*window) -> (B, D, window)
         new_shape = shape[:-1] + (shape[-1] // self.maxout_window_size, self.maxout_window_size)
-        print("shape:", shape)
-        print("new_shape:", new_shape)
         x = x.view(new_shape)
         x, _ = torch.max(x, dim=-1)
         return x
@@ -40,7 +38,7 @@ class InferenceNetwork(nn.Module):
         return mu, logvar
 
 if __name__ == "__main__":
-    model = Encoder()
+    model = InferenceNetwork()
     x = torch.randn(16, 784)
     h = model.maxout(model.li1(x))
     print("h:", h.shape)
