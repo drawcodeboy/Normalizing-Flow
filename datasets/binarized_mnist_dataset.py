@@ -31,8 +31,10 @@ class BinarizedMNISTDataset(Dataset):
 
         # Binarization
         image = torch.where(image > 0.5, torch.ones_like(image), torch.zeros_like(image))
+
+        vectorized_image = image.view(-1)
         
-        return image
+        return vectorized_image
     
     @classmethod
     def from_config(cls, cfg):

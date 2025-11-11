@@ -61,14 +61,16 @@ def main(cfg):
     total_start_time = int(time.time())
     
     min_loss = 1e10
+    update_count = 0
     
     for current_epoch in range(1, hp_cfg['epochs']+1):
         print("=======================================================")
         print(f"Epoch: [{current_epoch:03d}/{hp_cfg['epochs']:03d}]\n")
+        print(f"Parameter update count: {update_count:06d}\n")
         
         # Training One Epoch
         start_time = int(time.time())
-        train_loss = train_one_epoch(model, train_dl, None, optimizer, None, task_cfg, device)
+        train_loss, update_count_per_epoch = train_one_epoch(model, train_dl, None, optimizer, None, task_cfg, device, update_count, hp_cfg['max_update_count'])
         elapsed_time = int(time.time() - start_time)
         print(f"Train Time: {elapsed_time//60:02d}m {elapsed_time%60:02d}s\n")
 
@@ -78,6 +80,11 @@ def main(cfg):
 
         total_train_loss.append(train_loss)
         save_loss_ckpt(save_cfg['name'], total_train_loss, save_cfg['loss_path'])
+
+        update_count += update_count_per_epoch
+        if update_count == hp_cfg['max_update_count']:
+            print(f"Reached max update count: {hp_cfg['max_update_count']}. Stopping training.")
+            break
 
     total_elapsed_time = int(time.time()) - total_start_time
     print(f"<Total Train Time: {total_elapsed_time//60:02d}m {total_elapsed_time%60:02d}s>")
