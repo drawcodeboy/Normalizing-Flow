@@ -18,9 +18,19 @@ class PlanarFlow(nn.Module):
         f_z = z + self.u * f_z.unsqueeze(-1)
 
         return f_z
+    
+    def diff_tanh(self, x):
+        return 1 - torch.tanh(x) ** 2
+    
+    def log_abs_det_jacobian(self, z):
+        psi_z = self.diff_tanh((z @ self.w) + self.b).unsqueeze(-1) * self.w # (B, D)
+        log_abs_det = torch.log(torch.abs(1 + (psi_z @ self.u)))
+
+        return log_abs_det
 
 if __name__ == '__main__':
     flow = PlanarFlow(latent_dim=40)
     z = torch.randn(16, 40) 
     z_transformed = flow(z)
-    print(z_transformed.shape)
+
+    flow.log_abs_det_jacobian(z)
