@@ -60,34 +60,40 @@ def main(cfg):
     total_train_loss = []
     total_start_time = int(time.time())
     
-    min_loss = 1e10
     update_count = 0
-    
-    for current_epoch in range(1, hp_cfg['epochs']+1):
-        print("=======================================================")
-        print(f"Epoch: [{current_epoch:03d}/{hp_cfg['epochs']:03d}]\n")
-        print(f"Parameter update count: {update_count:06d}\n")
-        
-        # Training One Epoch
-        start_time = int(time.time())
-        train_loss, update_count_per_epoch = train_one_epoch(model, train_dl, None, optimizer, None, task_cfg, device, update_count, hp_cfg['max_update_count'])
-        elapsed_time = int(time.time() - start_time)
-        print(f"Train Time: {elapsed_time//60:02d}m {elapsed_time%60:02d}s\n")
 
-        if train_loss < min_loss:
-            min_loss = train_loss
-            save_model_ckpt(model, save_cfg['name'], current_epoch, save_cfg['weights_path'])
+    model.train()
 
-        total_train_loss.append(train_loss)
-        save_loss_ckpt(save_cfg['name'], total_train_loss, save_cfg['loss_path'])
+    while update_count < hp_cfg['max_update_count']:
+        print("\n=======================================================")
 
-        update_count += update_count_per_epoch
-        if update_count == hp_cfg['max_update_count']:
-            print(f"Reached max update count: {hp_cfg['max_update_count']}. Stopping training.")
-            break
+        loss = None
+        for data in train_dl:
+            if task_cfg['object'] == 'train_nf':
+                optimizer.zero_grad()
+
+                x = data
+                x = x.to(device)
+
+                x_prime, z_li, mu, log_var = model(x)
+                loss = model.free_energy_bound(x, z_li, mu, log_var, x_prime)
+
+                loss.backward()
+                optimizer.step()
+            else:
+                raise Exception("Check your task_cfg['object'] configuration")
+            update_count += 1
+
+            if update_count == hp_cfg['max_update_count']:
+                save_model_ckpt(model, save_cfg['name'], update_count, save_cfg['weights_path'])
+                break
+            elif update_count % 100000 == 0:
+                save_model_ckpt(model, save_cfg['name'], update_count, save_cfg['weights_path'])
+        print(f"\rParameter update count: {update_count:06d}", end="")
 
     total_elapsed_time = int(time.time()) - total_start_time
     print(f"<Total Train Time: {total_elapsed_time//60:02d}m {total_elapsed_time%60:02d}s>")
+    
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Training', parents=[add_args_parser()])

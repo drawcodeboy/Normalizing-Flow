@@ -26,8 +26,7 @@ hyperparameters:
   optim: RMSprop
   momentum: 0.9
   lr: 0.00001
-  epochs: 1000
-  max_update_count: 500000
+  max_update_count: 100
   batch_size: 100
 
 save:
