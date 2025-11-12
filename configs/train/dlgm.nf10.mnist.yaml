@@ -1,6 +1,6 @@
 title: Train Normalizing Flow (DLGM + NF k=10) on Binarized MNIST
 
-device: &device cpu
+device: &device cuda:1
 parallel: false
 
 task:
@@ -26,8 +26,7 @@ hyperparameters:
   optim: RMSprop
   momentum: 0.9
   lr: 0.00001
-  epochs: 1000
-  max_update_count: 500000
+  max_update_count: 10000
   batch_size: 100
 
 save:

@@ -1,6 +1,6 @@
 title: Train Normalizing Flow (DLGM + Diagonal Covariance) on Binarized MNIST
 
-device: &device cpu
+device: &device cuda:1
 parallel: false
 
 task:
@@ -26,7 +26,7 @@ hyperparameters:
   optim: RMSprop
   momentum: 0.9
   lr: 0.00001
-  max_update_count: 100
+  max_update_count: 10000
   batch_size: 100
 
 save:

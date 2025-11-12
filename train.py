@@ -58,16 +58,16 @@ def main(cfg):
 
     # Training loss
     total_train_loss = []
-    total_start_time = int(time.time())
+    start_time = int(time.time())
     
     update_count = 0
 
     model.train()
 
-    while update_count < hp_cfg['max_update_count']:
-        print("\n=======================================================")
+    while update_count <= hp_cfg['max_update_count']:
 
         loss = None
+        break_flag = False
         for data in train_dl:
             if task_cfg['object'] == 'train_nf':
                 optimizer.zero_grad()
@@ -82,17 +82,19 @@ def main(cfg):
                 optimizer.step()
             else:
                 raise Exception("Check your task_cfg['object'] configuration")
-            update_count += 1
 
             if update_count == hp_cfg['max_update_count']:
                 save_model_ckpt(model, save_cfg['name'], update_count, save_cfg['weights_path'])
+                break_flag = True
                 break
-            elif update_count % 100000 == 0:
+            elif (update_count % 100000 == 0) and (update_count != 0):
                 save_model_ckpt(model, save_cfg['name'], update_count, save_cfg['weights_path'])
-        print(f"\rParameter update count: {update_count:06d}", end="")
+            
+            update_count += 1
+            elapsed_time = int(time.time()) - start_time
+            print(f"\r[Time: {elapsed_time//60:02d}m {elapsed_time%60:02d}s] Parameter update count: {update_count:06d} / Free Energy Bound: {loss:.6f}", end="")
 
-    total_elapsed_time = int(time.time()) - total_start_time
-    print(f"<Total Train Time: {total_elapsed_time//60:02d}m {total_elapsed_time%60:02d}s>")
+        if break_flag: break
     
 
 if __name__ == '__main__':
