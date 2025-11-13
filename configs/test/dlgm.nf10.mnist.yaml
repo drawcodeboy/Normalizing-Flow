@@ -1,17 +1,17 @@
-title: Train Normalizing Flow (DLGM + NF k=10) on Binarized MNIST
+title: Test Normalizing Flow (DLGM + Diagonal NF k=10) on Binarized MNIST
 
 device: &device cuda:1
 parallel: false
 
 task:
-  object: train_nf
+  object: test_nf
 
 data:
-  train:
+  test:
     name: binarized_mnist
     root: data/
     download: true
-    mode: train
+    mode: test
 
 model:
   name: normalizing_flow
@@ -23,14 +23,8 @@ model:
   flow_type: planar
 
 hyperparameters:
-  optim: RMSprop
-  momentum: 0.9
-  lr: 0.00001
-  max_update_count: 500000
-  batch_size: 100
-  use_inv_temperature: true
+  batch_size: 200
 
 save:
-  name: dlgm.nf10.mnist
   weights_path: saved/weights
-  loss_path: saved/loss
+  weights_filename: dlgm.nf10.mnist.updates_100000.pth
