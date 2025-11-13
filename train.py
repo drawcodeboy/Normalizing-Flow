@@ -1,11 +1,10 @@
 from datasets import load_dataset
 from models import load_model
 
-from utils import train_one_epoch, save_model_ckpt, save_loss_ckpt
+from utils import save_model_ckpt, save_loss_ckpt
 
 import torch
 from torch import nn, optim
-from torch.utils.data import DataLoader
 import argparse, time, os, sys, yaml
 
 def add_args_parser():
@@ -44,6 +43,8 @@ def main(cfg):
     
     if cfg['parallel'] == True:
         model = nn.DataParallel(model)
+
+    
     
     # Optimizer
     optimizer = None
@@ -61,22 +62,23 @@ def main(cfg):
     start_time = int(time.time())
     
     update_count = 0
-
     model.train()
 
     while update_count <= hp_cfg['max_update_count']:
-
         loss = None
         break_flag = False
         for data in train_dl:
+
             if task_cfg['object'] == 'train_nf':
+                beta = min(1.0, 0.01 + update_count / 10000.0) if hp_cfg['use_inv_temperature'] else 1.0
+
                 optimizer.zero_grad()
 
                 x = data
                 x = x.to(device)
 
                 x_prime, z_li, mu, log_var = model(x)
-                loss = model.free_energy_bound(x, z_li, mu, log_var, x_prime)
+                loss = model.free_energy_bound(x, z_li, mu, log_var, x_prime, beta=beta)
 
                 loss.backward()
                 optimizer.step()
@@ -92,7 +94,7 @@ def main(cfg):
             
             update_count += 1
             elapsed_time = int(time.time()) - start_time
-            print(f"\r[Time: {elapsed_time//60:02d}m {elapsed_time%60:02d}s] Parameter update count: {update_count:06d} / Free Energy Bound: {loss:.6f}", end="")
+            print(f"\r[Time: {elapsed_time//60:02d}m {elapsed_time%60:02d}s] Parameter update count: {update_count:06d} / Free Energy Bound: {loss:.6f} / beta: {beta:.4f}", end="")
 
         if break_flag: break
     
