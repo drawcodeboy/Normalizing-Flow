@@ -64,30 +64,33 @@ class NormalizingFlow(nn.Module):
 
         return x_prime, z_li, mu, logvar
     
-    def free_energy_bound(self, x, z_li, mu, log_var, x_prime):
-        #### VAE Case, Free Energy Bound(-ELBO) (n_flows == 0)
+    def free_energy_bound(self, x, z_li, mu, log_var, x_prime, beta=1.0):
+        # Beta is inverse termperature for annealed flow-based free energy bound
+
+        # VAE Case, Free Energy Bound(-ELBO) (n_flows == 0)
         if self.n_flows == 0:
             # 1) Regularization
             first_term = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=1).mean()
             
             # 2) Reconstruction
             n = x.size(0)
-            second_term = F.mse_loss(x_prime, x, reduction='sum') / n
+            second_term = F.binary_cross_entropy(x_prime, x, reduction='sum') / n
 
             loss = first_term + second_term
 
         # Normalizing Flow Case, Flow-based Free Energy Bound (n_flows > 0)
         elif self.n_flows > 0:
+            if beta is None: beta = 1.0
+
             # 1) E_{q_0(z_0)}[ln q_0(z_0)]
             # first_term = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=1).mean()
 
-            print(mu.shape, log_var); pdb.set_trace()
             first_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).entropy()
             first_term = torch.sum(first_term, dim=-1).mean() # Batch-wise mean
 
             # 2) Reconstruction
             n = x.size(0)
-            second_term = F.mse_loss(x_prime, x, reduction='sum') / n
+            second_term = F.binary_cross_entropy(x_prime, x, reduction='sum') / n
 
             # 3) -E_{q_0(z_0)}[log p(z_K)]
             z_K = z_li[-1]
@@ -100,7 +103,7 @@ class NormalizingFlow(nn.Module):
                 if idx == (len(z_li)-1): break
                 fourth_term -= self.flow[idx].log_abs_det_jacobian(z).mean() # batch-wise mean
 
-            loss = first_term + second_term + third_term + fourth_term
+            loss = first_term + beta*(second_term + third_term) + fourth_term
 
         return loss
 
