@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from torch.distributions import Normal
+import pdb
 
 from .dlgm import DLGM
 from .inference_network import InferenceNetwork
@@ -55,9 +56,6 @@ class NormalizingFlow(nn.Module):
         if self.n_flows > 0:
             for idx, flow_layer in enumerate(self.flow, start=1):
                 z = flow_layer(z)
-                if idx == self.n_flows:
-                    # 마지막 flow의 z는 저장 안 함
-                    break
                 z_li.append(z)
         else:
             z = self.flow(z)
@@ -82,6 +80,8 @@ class NormalizingFlow(nn.Module):
         elif self.n_flows > 0:
             # 1) E_{q_0(z_0)}[ln q_0(z_0)]
             # first_term = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=1).mean()
+
+            print(mu.shape, log_var); pdb.set_trace()
             first_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).entropy()
             first_term = torch.sum(first_term, dim=-1).mean() # Batch-wise mean
 
@@ -97,6 +97,7 @@ class NormalizingFlow(nn.Module):
             # 4) Flow correction
             fourth_term = 0.
             for idx, z in enumerate(z_li, start=0):
+                if idx == (len(z_li)-1): break
                 fourth_term -= self.flow[idx].log_abs_det_jacobian(z).mean() # batch-wise mean
 
             loss = first_term + second_term + third_term + fourth_term
