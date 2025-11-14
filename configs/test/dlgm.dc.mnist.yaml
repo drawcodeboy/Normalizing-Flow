@@ -23,8 +23,8 @@ model:
   flow_type: planar
 
 hyperparameters:
-  batch_size: 200
+  batch_size: 100
 
 save:
   weights_path: saved/weights
-  weights_filename: dlgm.dc.mnist.updates_100000.pth
+  weights_filename: dlgm.dc.mnist.updates_200000.pth

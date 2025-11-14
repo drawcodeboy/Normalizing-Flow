@@ -5,17 +5,26 @@ class PlanarFlow(nn.Module):
     '''
     Planar Flow (Page 5, Section 4.1)
     '''
-    def __init__(self, latent_dim: int):
+    def __init__(self, 
+                 latent_dim: int,
+                 invertibility_condition: bool = True):
         super().__init__()
         self.u = nn.Parameter(torch.randn(latent_dim))
         self.w = nn.Parameter(torch.randn(latent_dim))
         self.b = nn.Parameter(torch.randn(1))
         self.h = nn.Tanh()
 
+        self.invertibility_condition = invertibility_condition
+
     def forward(self, z):
         # batch 단위로 내적하려면, 어쩔 수 없이 z가 앞에 와야 함. z @ self.w (수식 그대로 따라가고 싶은데 아쉽.)
         f_z = self.h((z @ self.w) + self.b)
-        f_z = z + self.u * f_z.unsqueeze(-1)
+
+        if self.invertibility_condition == True:
+            u_hat = self.get_uhat(self.w, self.u)
+            f_z = z + u_hat * f_z.unsqueeze(-1)
+        else:
+            f_z = z + self.u * f_z.unsqueeze(-1)
 
         return f_z
     
@@ -24,9 +33,22 @@ class PlanarFlow(nn.Module):
     
     def log_abs_det_jacobian(self, z):
         psi_z = self.diff_tanh((z @ self.w) + self.b).unsqueeze(-1) * self.w # (B, D)
-        log_abs_det = torch.log(torch.abs(1 + (psi_z @ self.u)))
+
+        if self.invertibility_condition == True:
+            u_hat = self.get_uhat(self.w, self.u)
+            log_abs_det = torch.log(torch.abs(1 + (psi_z @ u_hat)))
+        else:
+            log_abs_det = torch.log(torch.abs(1 + (psi_z @ self.u)))
 
         return log_abs_det
+
+    def get_uhat(self, w, u):
+        # 가역성 조건 만족시키기 (Appendix A)
+        w_u = w @ u
+        # print(w.shape, u.shape, w_u.shape); exit()
+        m_wu = -1 + torch.log1p(torch.exp(w_u)) # log(1 + exp(w_u))
+        u_hat = u + ((m_wu - w_u) * w) / (w @ w)
+        return u_hat
 
 if __name__ == '__main__':
     flow = PlanarFlow(latent_dim=40)

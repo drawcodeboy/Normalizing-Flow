@@ -3,6 +3,7 @@ from models import load_model
 
 import torch
 from torch import nn
+import numpy as np
 import argparse, time, os, sys, yaml
 
 def add_args_parser():
@@ -96,13 +97,16 @@ def main(cfg):
                 raise Exception("Check your task_cfg['object'] configuration")
             
             elapsed_time = int(time.time()) - start_time
-            print(f"\r[Time: {elapsed_time//60:02d}m {elapsed_time%60:02d}s]  ({100*batch_idx/len(test_dl)}%)", end="")
+            print(f"\r[Time: {elapsed_time//60:02d}m {elapsed_time%60:02d}s] ({100*batch_idx/len(test_dl)}%)", end="")
 
     print()
     avg_neg_ln_p_x = sum(neg_ln_p_x_li)/len(neg_ln_p_x_li)
     print(f"Average Negative ln p(x): {avg_neg_ln_p_x:.6f}")
+    # print(f"Sigma Negative ln p(x): {np.std(np.array(neg_ln_p_x_li)):.6f}")
 
-    print(f"KL Divergence between q(z|x) and p(z|x): {avg_feb - avg_neg_ln_p_x:.6f}")
+    kl_li = [feb - neg_ln_p_x for feb, neg_ln_p_x in zip(feb_li, neg_ln_p_x_li)]
+    print(f"KL Divergence between q(z|x) and p(z|x): {avg_feb - avg_neg_ln_p_x:.6f}") # -ELBO + ln p(x)
+    # print(f"Sigma KL: {np.std(np.array(kl_li)):.6f}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Test', parents=[add_args_parser()])
