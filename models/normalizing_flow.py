@@ -114,7 +114,7 @@ class NormalizingFlow(nn.Module):
         if self.n_flows == 0:
             first_term = -F.binary_cross_entropy(x_prime, x, reduction='none').sum(dim=1)
             
-            second_term = Normal(loc=torch.zeros_like(z_li[-1]), scale=torch.ones_like(z_li[-1])).log_prob(z_li[-1]).sum(dim=1)
+            second_term = Normal(loc=torch.zeros_like(z_li[0]), scale=torch.ones_like(z_li[0])).log_prob(z_li[0]).sum(dim=1)
 
             third_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).log_prob(z_li[0]).sum(dim=1)
             
