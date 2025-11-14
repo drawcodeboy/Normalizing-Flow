@@ -82,9 +82,9 @@ class NormalizingFlow(nn.Module):
         elif self.n_flows > 0:
             if beta is None: beta = 1.0
 
-            # 1) E_{q_0(z_0)}[ln q_0(z_0)]
-            # first_term = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=1).mean()
+            # Expectation by Monte Carlo Sampling (one sample per data point)
 
+            # 1) E_{q_0(z_0)}[ln q_0(z_0)]
             first_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).entropy()
             first_term = torch.sum(first_term, dim=-1).mean() # Batch-wise mean
 
@@ -106,7 +106,38 @@ class NormalizingFlow(nn.Module):
             loss = first_term + beta*(second_term + third_term) + fourth_term
 
         return loss
+    
+    def neg_ln_p_x(self, x, samples=200):
+        x = x.repeat(samples, 1) # (1, D) -> (samples, D)
+        x_prime, z_li, mu, log_var = self.forward(x)
 
+        if self.n_flows == 0:
+            first_term = -F.binary_cross_entropy(x_prime, x, reduction='none').sum(dim=1)
+            
+            second_term = Normal(loc=torch.zeros_like(z_li[-1]), scale=torch.ones_like(z_li[-1])).log_prob(z_li[-1]).sum(dim=1)
+
+            third_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).log_prob(z_li[0]).sum(dim=1)
+            
+            w = first_term + second_term + third_term
+            neg_ln_p_x = -torch.logsumexp(w, dim=0) + torch.log(torch.tensor(float(samples)))
+
+        elif self.n_flows > 0:
+            first_term = -F.binary_cross_entropy(x_prime, x, reduction='none').sum(dim=1)
+            
+            second_term = Normal(loc=torch.zeros_like(z_li[-1]), scale=torch.ones_like(z_li[-1])).log_prob(z_li[-1]).sum(dim=1)
+
+            third_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).log_prob(z_li[0]).sum(dim=1)
+
+            fourth_term = torch.zeros_like(first_term)
+            for idx, z in enumerate(z_li, start=0):
+                if idx == (len(z_li)-1): break
+                fourth_term += self.flow[idx].log_abs_det_jacobian(z)
+            
+            w = first_term + second_term + third_term + fourth_term
+            neg_ln_p_x = -torch.logsumexp(w, dim=0) + torch.log(torch.tensor(float(samples)))
+        
+        return neg_ln_p_x
+    
     @classmethod
     def from_config(cls, cfg):
         return cls(input_dim=cfg['input_dim'],
@@ -120,9 +151,9 @@ if __name__ == "__main__":
                             hidden_dim=400,
                             latent_dim=40,
                             maxout_window_size=4,
-                            n_flows=0,
+                            n_flows=40,
                             flow_type='planar')
-    x = torch.randn(16, 784)
+    x = torch.ones(1, 784)
     x_prime, z_li, mu, logvar = model(x)
     print("x_prime:", x_prime.shape)
     print("mu:", mu.shape)
@@ -130,3 +161,4 @@ if __name__ == "__main__":
     print("Number of z in z_li:", len(z_li))
 
     model.free_energy_bound(x, z_li, mu, logvar, x_prime)
+    print(model.neg_ln_p_x(x, samples=200).shape)
