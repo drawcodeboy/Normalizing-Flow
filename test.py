@@ -73,7 +73,36 @@ def main(cfg):
             print(f"\r[Time: {elapsed_time//60:02d}m {elapsed_time%60:02d}s] ({100*batch_idx/len(test_dl)}%)", end="")
     
     print()
-    print(f"Average Free Energy Bound: {sum(feb_li)/len(feb_li):.6f}")
+    avg_feb = sum(feb_li)/len(feb_li)
+    print(f"Average Free Energy Bound: {avg_feb:.6f}")
+
+    test_dl = torch.utils.data.DataLoader(test_ds,
+                                          shuffle=False,
+                                          batch_size=1,
+                                          drop_last=False)
+
+    neg_ln_p_x_li = []
+    with torch.no_grad():
+        for batch_idx, data in enumerate(test_dl, start=1):
+
+            if task_cfg['object'] == 'test_nf':
+
+                x = data
+                x = x.to(device)
+
+                neg_ln_p_x = model.neg_ln_p_x(x, samples=200)
+                neg_ln_p_x_li.append(neg_ln_p_x.item())
+            else:
+                raise Exception("Check your task_cfg['object'] configuration")
+            
+            elapsed_time = int(time.time()) - start_time
+            print(f"\r[Time: {elapsed_time//60:02d}m {elapsed_time%60:02d}s]  ({100*batch_idx/len(test_dl)}%)", end="")
+
+    print()
+    avg_neg_ln_p_x = sum(neg_ln_p_x_li)/len(neg_ln_p_x_li)
+    print(f"Average Negative ln p(x): {avg_neg_ln_p_x:.6f}")
+
+    print(f"KL Divergence between q(z|x) and p(z|x): {avg_feb - avg_neg_ln_p_x:.6f}")
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser('Test', parents=[add_args_parser()])
