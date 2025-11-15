@@ -1,4 +1,4 @@
-title: Test Normalizing Flow (DLGM + Diagonal NF k=20) on Binarized MNIST
+title: Test Normalizing Flow (DLGM + Diagonal NF k=40) on Binarized MNIST
 
 device: &device cuda:1
 parallel: false
@@ -19,7 +19,7 @@ model:
   hidden_dim: 400
   latent_dim: 40
   maxout_window_size: 4
-  n_flows: 20
+  n_flows: 40
   flow_type: planar
 
 hyperparameters:
@@ -27,4 +27,4 @@ hyperparameters:
 
 save:
   weights_path: saved/weights
-  weights_filename: dlgm.nf20.mnist.updates_200000.pth
+  weights_filename: dlgm.nf40.mnist.updates_500000.pth

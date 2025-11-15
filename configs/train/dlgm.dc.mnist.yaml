@@ -28,7 +28,7 @@ hyperparameters:
   lr: 0.00001
   max_update_count: 500000
   batch_size: 100
-  use_inv_temperature: false
+  use_inv_temperature: true
 
 save:
   name: dlgm.dc.mnist
