@@ -1,6 +1,7 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
+import numpy as np
 
 class PlanarFlow(nn.Module):
     '''
@@ -13,6 +14,14 @@ class PlanarFlow(nn.Module):
         self.u = nn.Parameter(torch.randn(latent_dim))
         self.w = nn.Parameter(torch.randn(latent_dim))
         self.b = nn.Parameter(torch.randn(1))
+        
+        # Weight initialization
+        lim_w = np.sqrt(2.0 / latent_dim)
+        nn.init.uniform_(self.w, -lim_w, lim_w)
+        lim_u = np.sqrt(2.0)
+        nn.init.uniform_(self.u, -lim_u, lim_u)
+        nn.init.zeros_(self.b)
+
         self.h = nn.Tanh()
 
         self.invertibility_condition = invertibility_condition
@@ -37,13 +46,9 @@ class PlanarFlow(nn.Module):
 
         if self.invertibility_condition == True:
             u_hat = self.get_uhat(self.w, self.u)
-            # log_abs_det = torch.log(torch.abs(1 + (psi_z @ u_hat))) # 원래 코드
-            s = (psi_z @ u_hat)
-            log_abs_det = torch.log(torch.clamp(torch.abs(1 + s), min=1e-8))
+            log_abs_det = torch.log(torch.abs(1 + (psi_z @ u_hat))) # 원래 코드
         else:
-            # log_abs_det = torch.log(torch.abs(1 + (psi_z @ self.u))) # 원래 코드
-            s = (psi_z @ self.u)
-            log_abs_det = torch.log(torch.clamp(torch.abs(1 + s), min=1e-8))
+            log_abs_det = torch.log(torch.abs(1 + (psi_z @ self.u))) # 원래 코드
 
         return log_abs_det
 
@@ -51,7 +56,9 @@ class PlanarFlow(nn.Module):
         # 가역성 조건 만족시키기 (Appendix A)
         w_u = w @ u
         # print(w.shape, u.shape, w_u.shape); exit()
+        
         # use softplus for numerical stability
+        # softplus(x) = log(1 + exp(x))
         m_wu = -1.0 + F.softplus(w_u)
         u_hat = u + ((m_wu - w_u) * w) / (w @ w)
         return u_hat
