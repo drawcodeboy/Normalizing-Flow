@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 def main():
     plt.figure(figsize=(12, 4))
     margin = 3
-    flow_length = [0, 10]
+    flow_length = [0, 10, 20]
 
     # (1) Free Energy Bound vs Flow Length
     plt.subplot(1, 3, 1)
@@ -13,7 +13,7 @@ def main():
     plt.xlabel('Flow length')
     plt.ylabel('Variational Bound (nats)')
 
-    results = [94.643713, 94.366421]
+    results = [93.894511, 94.243438, 94.676130]
     plt.plot(flow_length, results, label='NF', color='blue', zorder=1)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
@@ -26,7 +26,7 @@ def main():
     plt.xlabel('Flow length')
     plt.ylabel('-log-likelihood (nats)')
 
-    results = [88.391663, 88.095667]
+    results = [87.810139, 88.124440, 88.399779]
     plt.plot(flow_length, results, label='NF', color='blue', zorder=1)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
@@ -39,7 +39,7 @@ def main():
     plt.xlabel('Flow length')
     plt.ylabel('KL(q;truth) (nats)')
 
-    results = [6.252050, 6.270754]
+    results = [6.084372, 6.118998, 6.276352]
     plt.plot(flow_length, results, label='NF', color='blue', zorder=1)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
