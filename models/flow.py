@@ -46,9 +46,9 @@ class PlanarFlow(nn.Module):
 
         if self.invertibility_condition == True:
             u_hat = self.get_uhat(self.w, self.u)
-            log_abs_det = torch.log(torch.abs(1 + (psi_z @ u_hat))) # 원래 코드
+            log_abs_det = torch.log(torch.abs(1 + (psi_z @ u_hat)))
         else:
-            log_abs_det = torch.log(torch.abs(1 + (psi_z @ self.u))) # 원래 코드
+            log_abs_det = torch.log(torch.abs(1 + (psi_z @ self.u)))
 
         return log_abs_det
 

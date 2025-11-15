@@ -13,6 +13,7 @@ python subtasks/02_dist_handle/exec.py
 # 3. <code>03_plot_result</code>
 ```
 python subtasks/03_plot_result/exec.py
-python subtasks/03_plot_result/temp.py # 학습 중간에 500,000번 업데이트가 아닌 모델들 결과 plot 용도
+python subtasks/03_plot_result/temp_100000.py # 학습 중간에 100,000번 업데이트 모델들 결과 plot 용도
+python subtasks/03_plot_result/temp_200000.py # 학습 중간에 200,000번 업데이트 모델들 결과 plot 용도
 ```
 * Figure 4처럼 결과 이미지를 추출하기 위한 Script
