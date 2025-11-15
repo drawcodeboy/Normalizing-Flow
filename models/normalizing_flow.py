@@ -69,6 +69,7 @@ class NormalizingFlow(nn.Module):
 
         # VAE Case, Free Energy Bound(-ELBO) (n_flows == 0)
         if self.n_flows == 0:
+            '''
             # 1) Regularization
             first_term = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=1).mean()
             
@@ -77,6 +78,23 @@ class NormalizingFlow(nn.Module):
             second_term = F.binary_cross_entropy(x_prime, x, reduction='sum') / n
 
             loss = first_term + second_term
+            '''
+            # Equivalent formulation (use annealing)
+
+            # 1) E_{q_0(z_0)}[ln q_0(z_0)]
+            first_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).entropy()
+            first_term = torch.sum(first_term, dim=-1).mean() # Batch-wise mean
+
+            # 2) -E_{q_0(z_0)}[log p(z_0)]
+            z_0 = z_li[0]
+            second_term = -Normal(loc=torch.zeros_like(z_0), scale=torch.ones_like(z_0)).log_prob(z_0)
+            second_term = torch.sum(second_term, dim=-1).mean() # Batch-wise mean
+
+            # 3) Reconstruction
+            n = x.size(0)
+            third_term = F.binary_cross_entropy(x_prime, x, reduction='sum') / n
+
+            loss = first_term + beta*(third_term + second_term)
 
         # Normalizing Flow Case, Flow-based Free Energy Bound (n_flows > 0)
         elif self.n_flows > 0:

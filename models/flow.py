@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
 
 class PlanarFlow(nn.Module):
     '''
@@ -36,9 +37,13 @@ class PlanarFlow(nn.Module):
 
         if self.invertibility_condition == True:
             u_hat = self.get_uhat(self.w, self.u)
-            log_abs_det = torch.log(torch.abs(1 + (psi_z @ u_hat)))
+            # log_abs_det = torch.log(torch.abs(1 + (psi_z @ u_hat))) # 원래 코드
+            s = (psi_z @ u_hat)
+            log_abs_det = torch.log(torch.clamp(torch.abs(1 + s), min=1e-8))
         else:
-            log_abs_det = torch.log(torch.abs(1 + (psi_z @ self.u)))
+            # log_abs_det = torch.log(torch.abs(1 + (psi_z @ self.u))) # 원래 코드
+            s = (psi_z @ self.u)
+            log_abs_det = torch.log(torch.clamp(torch.abs(1 + s), min=1e-8))
 
         return log_abs_det
 
@@ -46,7 +51,8 @@ class PlanarFlow(nn.Module):
         # 가역성 조건 만족시키기 (Appendix A)
         w_u = w @ u
         # print(w.shape, u.shape, w_u.shape); exit()
-        m_wu = -1 + torch.log1p(torch.exp(w_u)) # log(1 + exp(w_u))
+        # use softplus for numerical stability
+        m_wu = -1.0 + F.softplus(w_u)
         u_hat = u + ((m_wu - w_u) * w) / (w @ w)
         return u_hat
 
