@@ -27,4 +27,4 @@ hyperparameters:
 
 save:
   weights_path: saved/weights
-  weights_filename: dlgm.dc.mnist.updates_300000.pth
+  weights_filename: dlgm.dc.mnist.updates_500000.pth

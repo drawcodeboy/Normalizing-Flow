@@ -3,17 +3,17 @@ import matplotlib.pyplot as plt
 def main():
     plt.figure(figsize=(12, 4))
     margin = 3
-    flow_length = [0, 10, 20]
+    flow_length = [0, 10, 20, 40]
 
     # (1) Free Energy Bound vs Flow Length
     plt.subplot(1, 3, 1)
     plt.grid(zorder=0)
     plt.xlim([0-margin, 80+margin])
-    plt.ylim([90, 100])
+    plt.ylim([90, 97])
     plt.xlabel('Flow length')
     plt.ylabel('Variational Bound (nats)')
 
-    results = [93.894511, 94.243438, 94.676130]
+    results = [93.860907, 93.682114, 93.239948, 93.118923]
     plt.plot(flow_length, results, label='NF', color='blue', zorder=1)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
@@ -22,11 +22,11 @@ def main():
     plt.subplot(1, 3, 3)
     plt.grid(zorder=0)
     plt.xlim([0-margin, 80+margin])
-    plt.ylim([85, 90])
+    plt.ylim([85, 91])
     plt.xlabel('Flow length')
     plt.ylabel('-log-likelihood (nats)')
 
-    results = [87.810139, 88.124440, 88.399779]
+    results = [87.797915, 87.690830, 87.387068, 87.244485]
     plt.plot(flow_length, results, label='NF', color='blue', zorder=1)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
@@ -35,11 +35,11 @@ def main():
     plt.subplot(1, 3, 2)
     plt.grid(zorder=0)
     plt.xlim([0-margin, 80+margin])
-    plt.ylim([4, 8])
+    plt.ylim([4, 7])
     plt.xlabel('Flow length')
     plt.ylabel('KL(q;truth) (nats)')
 
-    results = [6.084372, 6.118998, 6.276352]
+    results = [6.062992, 5.991284, 5.852880, 5.874438]
     plt.plot(flow_length, results, label='NF', color='blue', zorder=1)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
