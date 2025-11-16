@@ -40,15 +40,15 @@ python test.py --config=dlgm.nf10.mnist
     - Assuming $b=0$, the value $\mathbf{w}^\top\mathbf{z}$ needs to lie approximately in the interval $[−2,2]$ to maintain meaningful gradients.
         * If $\mathbf{w}$ is too large, $\text{tanh}(\mathbf{w}^\top\mathbf{z})$ saturates and gradients vanish, making the flow impossible to train.
         * If $\mathbf{w}$ is too small, $h(\mathbf{w}^\top\mathbf{z})$ becomes close to zero, causing $f(\mathbf{z})\approx\mathbf{z}$. This reduces the flow to an identity mapping and effectively disables it.
-        $$ f(\mathbf{z})=\mathbf{z}+\mathbf{u}h(\mathbf{w}^\top\mathbf{z}+b) $$
+        $$f(\mathbf{z})=\mathbf{z}+\mathbf{u}h(\mathbf{w}^\top\mathbf{z}+b)$$
     
     - The derivative $h'(\mathbf{w}^\top\mathbf{z})$ appears in the logdet-Jacobian:
         * If $\mathbf{w}$ is too large, the inner term of the log becomes close to 1, making the logdet-Jacobian close to 0.
         * If $\mathbf{w}$ is too small, then in
-        $$ \psi(\mathbf{z})=h'(\mathbf{w}^\top\mathbf{z}+b)\mathbf{w} $$
+        $$\psi(\mathbf{z})=h'(\mathbf{w}^\top\mathbf{z}+b)\mathbf{w}$$
         * the derivative of tanh behaves close to 1 near 0, so the entire expression scales with $\mathbf{w}$. This again makes the log-det term close to 0.
         * A log-det Jacobian that is too small leads to extremely small gradient magnitudes, slowing or preventing learning:
-        $$ \frac{\partial}{\partial\mathbf{u}}\log\vert1+\mathbf{u}^\top\psi(\mathbf{z})\vert=\frac{\psi(\mathbf{z})}{1+0}=\psi(\mathbf{z}) $$
+        $$\frac{\partial}{\partial\mathbf{u}}\log\vert1+\mathbf{u}^\top\psi(\mathbf{z})\vert=\frac{\psi(\mathbf{z})}{1+0}=\psi(\mathbf{z})$$
         * When $\mathbf{w}$ is too small, $\psi(\mathbf{z})$ is small as well, causing the gradient to shrink.
 * Given that each Flow has its own parameters, <a href="https://github.com/VincentStimper/normalizing-flows">a repository</a> with an implementation similar to mine initializes the weights using a scheme similar to Xavier initialization. I applied the same strategy, and the difference between the initialized model (a) and the non-initialized model (b) shows a clear performance gap. <b>This supports the finding that weight initialization plays a critical role in the effectiveness of Planar Flow.</b>
 # References
