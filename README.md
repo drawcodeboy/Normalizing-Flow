@@ -51,6 +51,9 @@ python test.py --config=dlgm.nf10.mnist
         $$\frac{\partial}{\partial\mathbf{u}}\log\vert1+\mathbf{u}^\top\psi(\mathbf{z})\vert=\frac{\psi(\mathbf{z})}{1+0}=\psi(\mathbf{z})$$
         * When $\mathbf{w}$ is too small, $\psi(\mathbf{z})$ is small as well, causing the gradient to shrink.
 * Given that each Flow has its own parameters, <a href="https://github.com/VincentStimper/normalizing-flows">a repository</a> with an implementation similar to mine initializes the weights using a scheme similar to Xavier initialization. I applied the same strategy, and the difference between the initialized model (a) and the non-initialized model (b) shows a clear performance gap. <b>This supports the finding that weight initialization plays a critical role in the effectiveness of Planar Flow.</b>
+* I believe that generating the parameters of each flow using the inference network (i.e., adopting a Hypernetwork-like structure) can make training highly unstable. For this reason, I still don’t fully understand why the original papers chose this approach or how they ensured stable learning. If anyone has a clear explanation or practical insights, please leave an issue here or email me at dobylive01@gmail.com
+. It would be a huge help.
+
 # References
 ```
 @inproceedings{rezende2015variational,
