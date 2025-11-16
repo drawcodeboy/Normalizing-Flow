@@ -58,7 +58,6 @@ def main(cfg):
     save_cfg = cfg['save']
 
     # Training loss
-    total_train_loss = []
     start_time = int(time.time())
     
     update_count = 0
