@@ -1,4 +1,6 @@
 # Normalizing Flow
+* Implementation of <b><i><a href="https://arxiv.org/abs/1505.05770">Variational Inference with Normalizing Flows</a></i></b> with PyTorch
+# Settings
 ```
 conda create -n nf python=3.12
 conda activate nf
@@ -30,8 +32,8 @@ python test.py --config=dlgm.nf10.mnist
 </table>
 
 # Limitation & Report
-* The performance difference from the original paper is shown in the Results section. In my implementation, the performance gain from adding Flow is smaller than what the original paper reports. To understand this discrepancy, I reviewed the paper again and identified one key difference: in the original implementation, the parameters of each Flow are generated from the output of the Inference Network. Aside from this point, I am confident that the rest of my implementation follows the paper faithfully.
-* This means the original paper uses flow-specific parameters conditioned on the encoder output, whereas my implementation uses separate learnable parameters for each Flow. While examining this detail, I made an interesting finding: for Planar Flow, the choice of weight initialization has a critical impact when tanh is used as the nonlinearity. The reasons are as follows.
+* The performance difference from the original paper is shown in the Results section. In my implementation, the performance gain from adding Flow is smaller than what the original paper reports. To understand this discrepancy, I reviewed the paper again and identified one key difference: in the original implementation, the parameters of each Flow are generated from the output of the Inference Network <i>(in Sec 4.2.)</i>. Aside from this point, I am confident that the rest of my implementation follows the paper faithfully.
+* This means the original paper uses flow-specific parameters conditioned on the encoder output, whereas my implementation uses separate learnable parameters for each Flow. While examining this detail, I made an interesting finding: <b> for Planar Flow, the choice of weight initialization has a critical impact when tanh is used as the nonlinearity. </b> The reasons are as follows.
 
     - The term $\mathbf{w}^\top\mathbf{z}$ always passes through the nonlinearity $h(\cdot)$ and its derivative $h'(\cdot)$ for both forward computation and the log-det Jacobian. With $h(\cdot)=\text{tanh}$, the useful gradient region is limited.
         
@@ -48,7 +50,7 @@ python test.py --config=dlgm.nf10.mnist
         * A log-det Jacobian that is too small leads to extremely small gradient magnitudes, slowing or preventing learning:
         $$ \frac{\partial}{\partial\mathbf{u}}\log\vert1+\mathbf{u}^\top\psi(\mathbf{z})\vert=\frac{\psi(\mathbf{z})}{1+0}=\psi(\mathbf{z}) $$
         * When $\mathbf{w}$ is too small, $\psi(\mathbf{z})$ is small as well, causing the gradient to shrink.
-* Given that each Flow has its own parameters, a repository with an implementation similar to mine initializes the weights using a scheme similar to Xavier initialization. I applied the same strategy, and the difference between the initialized model (a) and the non-initialized model (b) shows a clear performance gap. <b>This supports the finding that weight initialization plays a critical role in the effectiveness of Planar Flow.</b>
+* Given that each Flow has its own parameters, <a href="https://github.com/VincentStimper/normalizing-flows">a repository</a> with an implementation similar to mine initializes the weights using a scheme similar to Xavier initialization. I applied the same strategy, and the difference between the initialized model (a) and the non-initialized model (b) shows a clear performance gap. <b>This supports the finding that weight initialization plays a critical role in the effectiveness of Planar Flow.</b>
 # References
 ```
 @inproceedings{rezende2015variational,
