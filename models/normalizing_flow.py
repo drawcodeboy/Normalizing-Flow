@@ -26,7 +26,8 @@ class NormalizingFlow(nn.Module):
         self.encoder = InferenceNetwork(input_dim=input_dim,
                                         hidden_dim=hidden_dim,
                                         latent_dim=latent_dim,
-                                        maxout_window_size=maxout_window_size)
+                                        maxout_window_size=maxout_window_size,
+                                        n_flows=n_flows)
         self.decoder = DLGM(latent_dim=latent_dim,
                             output_dim=input_dim)
         
@@ -43,18 +44,27 @@ class NormalizingFlow(nn.Module):
             # Variational Autoencoder (no flows)
             self.flow = nn.Identity()
 
+        self.latent_dim = latent_dim
+
     def reparameterize(self, mu, logvar):
         std = torch.exp(0.5 * logvar)
         eps = torch.randn_like(std)
         return mu + eps * std
-    
+
+    def extract_params(self, flow_idx, flow_params):
+        segment = (self.latent_dim * 2) + 1 # segment length for planar flow
+        flow_param = flow_params[:, flow_idx*segment:(flow_idx+1)*segment]
+        u, w, b = flow_param[:, 0:self.latent_dim], flow_param[:, self.latent_dim:2*self.latent_dim], flow_param[:, 2*self.latent_dim].unsqueeze(-1)
+
+        return u, w, b
+
     def forward(self, x):
         mu, logvar = self.encoder(x)
         z = self.reparameterize(mu, logvar)
 
         z_li = [z]
         if self.n_flows > 0:
-            for idx, flow_layer in enumerate(self.flow, start=1):
+            for flow_idx, flow_layer in enumerate(self.flow, start=0):
                 z = flow_layer(z)
                 z_li.append(z)
         else:
@@ -69,18 +79,6 @@ class NormalizingFlow(nn.Module):
 
         # VAE Case, Free Energy Bound(-ELBO) (n_flows == 0)
         if self.n_flows == 0:
-            '''
-            # 1) Regularization
-            first_term = -0.5 * torch.sum(1 + log_var - mu.pow(2) - log_var.exp(), dim=1).mean()
-            
-            # 2) Reconstruction
-            n = x.size(0)
-            second_term = F.binary_cross_entropy(x_prime, x, reduction='sum') / n
-
-            loss = first_term + second_term
-            '''
-            # Equivalent formulation (use annealing)
-
             # 1) E_{q_0(z_0)}[ln q_0(z_0)]
             first_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).entropy()
             first_term = torch.sum(first_term, dim=-1).mean() # Batch-wise mean
@@ -117,9 +115,10 @@ class NormalizingFlow(nn.Module):
 
             # 4) Flow correction
             fourth_term = 0.
-            for idx, z in enumerate(z_li, start=0):
-                if idx == (len(z_li)-1): break
-                fourth_term -= self.flow[idx].log_abs_det_jacobian(z).mean() # batch-wise mean
+            for flow_idx, z in enumerate(z_li, start=0):
+                if flow_idx == (len(z_li)-1): break
+
+                fourth_term -= self.flow[flow_idx].log_abs_det_jacobian(z).mean() # batch-wise mean
 
             loss = first_term + beta*(second_term + third_term) + fourth_term
 
@@ -147,9 +146,10 @@ class NormalizingFlow(nn.Module):
             third_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).log_prob(z_li[0]).sum(dim=1)
 
             fourth_term = torch.zeros_like(first_term)
-            for idx, z in enumerate(z_li, start=0):
-                if idx == (len(z_li)-1): break
-                fourth_term += self.flow[idx].log_abs_det_jacobian(z)
+            for flow_idx, z in enumerate(z_li, start=0):
+                if flow_idx == (len(z_li)-1): break
+
+                fourth_term += self.flow[flow_idx].log_abs_det_jacobian(z)
             
             w = first_term + second_term + third_term + fourth_term
             neg_ln_p_x = -torch.logsumexp(w, dim=0) + torch.log(torch.tensor(float(samples)))

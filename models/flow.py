@@ -9,8 +9,11 @@ class PlanarFlow(nn.Module):
     '''
     def __init__(self, 
                  latent_dim: int,
+                 use_params: bool = False,
                  invertibility_condition: bool = True):
         super().__init__()
+        
+        self.u, self.w, self.b = None, None, None
         self.u = nn.Parameter(torch.randn(latent_dim))
         self.w = nn.Parameter(torch.randn(latent_dim))
         self.b = nn.Parameter(torch.randn(1))
@@ -25,30 +28,34 @@ class PlanarFlow(nn.Module):
         self.h = nn.Tanh()
 
         self.invertibility_condition = invertibility_condition
+        self.use_params = use_params
 
-    def forward(self, z):
+    def forward(self, z, u=None, w=None, b=None):
         # batch 단위로 내적하려면, 어쩔 수 없이 z가 앞에 와야 함. z @ self.w (수식 그대로 따라가고 싶은데 아쉽.)
-        f_z = self.h((z @ self.w) + self.b)
+        u, w, b = self.u, self.w, self.b
+
+        f_z = self.h((z @ w) + b)
 
         if self.invertibility_condition == True:
-            u_hat = self.get_uhat(self.w, self.u)
+            u_hat = self.get_uhat(w, u)
             f_z = z + u_hat * f_z.unsqueeze(-1)
         else:
-            f_z = z + self.u * f_z.unsqueeze(-1)
+            f_z = z + u * f_z.unsqueeze(-1)
 
         return f_z
     
     def diff_tanh(self, x):
         return 1 - torch.tanh(x) ** 2
     
-    def log_abs_det_jacobian(self, z):
-        psi_z = self.diff_tanh((z @ self.w) + self.b).unsqueeze(-1) * self.w # (B, D)
+    def log_abs_det_jacobian(self, z, u=None, w=None, b=None):
+        u, w, b = self.u, self.w, self.b
+        psi_z = self.diff_tanh((z @ w) + b).unsqueeze(-1) * w # (B, D)
 
         if self.invertibility_condition == True:
-            u_hat = self.get_uhat(self.w, self.u)
+            u_hat = self.get_uhat(w, u)
             log_abs_det = torch.log(torch.abs(1 + (psi_z @ u_hat)))
         else:
-            log_abs_det = torch.log(torch.abs(1 + (psi_z @ self.u)))
+            log_abs_det = torch.log(torch.abs(1 + (psi_z @ u)))
 
         return log_abs_det
 

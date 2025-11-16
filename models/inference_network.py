@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from einops import rearrange
 
 class InferenceNetwork(nn.Module):
     '''
@@ -9,7 +10,8 @@ class InferenceNetwork(nn.Module):
                  input_dim: int = 784,
                  hidden_dim: int = 400,
                  latent_dim: int = 40,
-                 maxout_window_size: int = 4):
+                 maxout_window_size: int = 4,
+                 n_flows: int = 0):
         super().__init__()
         
         self.li1 = nn.Linear(input_dim, hidden_dim*maxout_window_size)
@@ -17,6 +19,8 @@ class InferenceNetwork(nn.Module):
         self.li2_logvar = nn.Linear(hidden_dim, latent_dim)
 
         self.maxout_window_size = maxout_window_size
+
+        self.n_flows = n_flows
 
     def maxout(self, x):
         '''
