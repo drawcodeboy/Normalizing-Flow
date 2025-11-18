@@ -13,13 +13,13 @@ python test.py --config=dlgm.nf10.mnist
 <table align="center">
   <tr>
     <td align="center">
-      <img src="assets/figure_4.jpg" width="500"><br>
+      <img src="assets/figure_4_.jpg" width="500"><br>
       <em>(a) This repo's result (Flow length 0, 10, 20, 40)</em>
     </td>
   </tr>
   <tr>
     <td align="center">
-      <img src="assets/figure_4_wo_weight_init.png" width="500"><br>
+      <img src="assets/figure_4_wo_weight_init_.png" width="500"><br>
       <em>(b) This repo's result (w/o weight initialization, Flow length 0, 10, 20)</em>
     </td>
   </tr>
