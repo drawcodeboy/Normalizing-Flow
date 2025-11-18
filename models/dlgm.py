@@ -12,12 +12,31 @@ class DLGM(nn.Module):
     '''
     def __init__(self,
                  latent_dim: int = 40,
+                 hidden_dim: int = 400,
+                 maxout_window_size: int = 4,
                  output_dim: int = 784):
         super().__init__()
 
-        self.li = nn.Linear(latent_dim, output_dim)
+        self.li1 = nn.Linear(latent_dim, hidden_dim*maxout_window_size)
+        self.li2 = nn.Linear(hidden_dim, output_dim)
+
+        self.maxout_window_size = maxout_window_size
         self.sigmoid = nn.Sigmoid()
+
+    def maxout(self, x):
+        '''
+        Maxout activation function.
+        In page 7 of the original paper (left-column)
+        '''
+        shape = x.size()
+
+        # (B, D*window) -> (B, D, window)
+        new_shape = shape[:-1] + (shape[-1] // self.maxout_window_size, self.maxout_window_size)
+        x = x.view(new_shape)
+        x, _ = torch.max(x, dim=-1)
+        return x
         
     def forward(self, z):
-        x_prime = self.sigmoid(self.li(z))
+        h = self.maxout(self.li1(z))
+        x_prime = self.sigmoid(self.li2(h))
         return x_prime

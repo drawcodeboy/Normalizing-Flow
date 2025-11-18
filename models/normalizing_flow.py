@@ -29,6 +29,8 @@ class NormalizingFlow(nn.Module):
                                         maxout_window_size=maxout_window_size,
                                         n_flows=n_flows)
         self.decoder = DLGM(latent_dim=latent_dim,
+                            hidden_dim=hidden_dim,
+                            maxout_window_size=maxout_window_size,
                             output_dim=input_dim)
         
         self.n_flows = n_flows

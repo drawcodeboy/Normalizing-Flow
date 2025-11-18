@@ -1,6 +1,6 @@
 title: Test Normalizing Flow (DLGM + Diagonal NF k=20) on Binarized MNIST
 
-device: &device cuda:1
+device: &device cuda:0
 parallel: false
 
 task:
