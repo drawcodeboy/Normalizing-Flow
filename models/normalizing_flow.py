@@ -39,7 +39,7 @@ class NormalizingFlow(nn.Module):
         if self.n_flows > 0:
             # Normalizing Flow
             if flow_type == 'planar':
-                self.flow = nn.ModuleList([PlanarFlow(latent_dim) for _ in range(n_flows)])
+                self.flow = nn.ModuleList([PlanarFlow() for _ in range(n_flows)])
             elif flow_type == 'radial':
                 raise Exception("Radial Flow not implemented yet.")
         else:
@@ -53,21 +53,15 @@ class NormalizingFlow(nn.Module):
         eps = torch.randn_like(std)
         return mu + eps * std
 
-    def extract_params(self, flow_idx, flow_params):
-        segment = (self.latent_dim * 2) + 1 # segment length for planar flow
-        flow_param = flow_params[:, flow_idx*segment:(flow_idx+1)*segment]
-        u, w, b = flow_param[:, 0:self.latent_dim], flow_param[:, self.latent_dim:2*self.latent_dim], flow_param[:, 2*self.latent_dim].unsqueeze(-1)
-
-        return u, w, b
-
     def forward(self, x):
-        mu, logvar = self.encoder(x)
+        mu, logvar, u, w, b = self.encoder(x)
+        
         z = self.reparameterize(mu, logvar)
 
         z_li = [z]
         if self.n_flows > 0:
             for flow_idx, flow_layer in enumerate(self.flow, start=0):
-                z = flow_layer(z)
+                z = flow_layer(z, u[:, flow_idx, :, :], w[:, flow_idx, :, :], b[:, flow_idx, :, :])
                 z_li.append(z)
         else:
             z = self.flow(z)

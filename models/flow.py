@@ -8,39 +8,34 @@ class PlanarFlow(nn.Module):
     Planar Flow (Page 5, Section 4.1)
     '''
     def __init__(self, 
-                 latent_dim: int,
-                 use_params: bool = False,
                  invertibility_condition: bool = True):
         super().__init__()
-        
-        self.u, self.w, self.b = None, None, None
-        self.u = nn.Parameter(torch.randn(latent_dim))
-        self.w = nn.Parameter(torch.randn(latent_dim))
-        self.b = nn.Parameter(torch.randn(1))
-        
-        # Weight initialization
-        lim_w = np.sqrt(2.0 / latent_dim)
-        nn.init.uniform_(self.w, -lim_w, lim_w)
-        lim_u = np.sqrt(2.0)
-        nn.init.uniform_(self.u, -lim_u, lim_u)
-        nn.init.zeros_(self.b)
 
         self.h = nn.Tanh()
 
         self.invertibility_condition = invertibility_condition
-        self.use_params = use_params
 
     def forward(self, z, u=None, w=None, b=None):
         # batch 단위로 내적하려면, 어쩔 수 없이 z가 앞에 와야 함. z @ self.w (수식 그대로 따라가고 싶은데 아쉽.)
-        u, w, b = self.u, self.w, self.b
+        '''
+        z: (B, D)
+        u: (B, D, 1)
+        w: (B, 1, D)
+        b: (B, 1, 1)
+        '''
 
-        f_z = self.h((z @ w) + b)
+        z = z.unsqueeze(2) # (B, D) -> (B, D, 1)
+        f_z = self.h(torch.bmm(w, z) + b) # (B, 1, 1)
 
         if self.invertibility_condition == True:
-            u_hat = self.get_uhat(w, u)
-            f_z = z + u_hat * f_z.unsqueeze(-1)
+            u_hat = self.get_uhat(w, u) # (B, D, 1)
+
+            f_z = z + u_hat * f_z # (B, D) + (B, D)
+            f_z = f_z.squeeze(2)
+
         else:
-            f_z = z + u * f_z.unsqueeze(-1)
+            f_z = z + u * f_z
+            f_z = f_z.squeeze(2)
 
         return f_z
     
@@ -48,7 +43,6 @@ class PlanarFlow(nn.Module):
         return 1 - torch.tanh(x) ** 2
     
     def log_abs_det_jacobian(self, z, u=None, w=None, b=None):
-        u, w, b = self.u, self.w, self.b
         psi_z = self.diff_tanh((z @ w) + b).unsqueeze(-1) * w # (B, D)
 
         if self.invertibility_condition == True:
@@ -61,13 +55,16 @@ class PlanarFlow(nn.Module):
 
     def get_uhat(self, w, u):
         # 가역성 조건 만족시키기 (Appendix A)
-        w_u = w @ u
-        # print(w.shape, u.shape, w_u.shape); exit()
+        w_u = torch.bmm(w, u) # (B, 1, 1)
         
         # use softplus for numerical stability
         # softplus(x) = log(1 + exp(x))
-        m_wu = -1.0 + F.softplus(w_u)
-        u_hat = u + ((m_wu - w_u) * w) / (w @ w)
+        m_wu = -1.0 + F.softplus(w_u) # (B, 1, 1)
+        w_norm_square = torch.bmm(w, w.permute(0, 2, 1)) # (B, 1, 1)
+
+        # u : (B, D, 1)
+        # ((m_wu - w_u) * w) / w_norm_square : (B, 1, D)
+        u_hat = u + (((m_wu - w_u) * w) / w_norm_square).permute(0, 2, 1)
         return u_hat
 
 if __name__ == '__main__':
