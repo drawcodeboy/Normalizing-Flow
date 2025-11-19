@@ -27,7 +27,8 @@ class NormalizingFlow(nn.Module):
                                         hidden_dim=hidden_dim,
                                         latent_dim=latent_dim,
                                         maxout_window_size=maxout_window_size,
-                                        n_flows=n_flows)
+                                        n_flows=n_flows,
+                                        flow_type=flow_type)
         self.decoder = DLGM(latent_dim=latent_dim,
                             hidden_dim=hidden_dim,
                             maxout_window_size=maxout_window_size,
@@ -35,6 +36,7 @@ class NormalizingFlow(nn.Module):
         
         self.n_flows = n_flows
         self.flow = None
+        self.flow_type = flow_type
 
         if self.n_flows > 0:
             # Normalizing Flow
@@ -54,101 +56,72 @@ class NormalizingFlow(nn.Module):
         return mu + eps * std
 
     def forward(self, x):
-        mu, logvar, u, w, b = self.encoder(x)
-        
+        if self.n_flows > 0 and self.flow_type == 'planar':
+            mu, logvar, u, w, b = self.encoder(x)
+        else:
+            mu, logvar = self.encoder(x)
+
+        bz = x.size(0)
+
         z = self.reparameterize(mu, logvar)
 
         z_li = [z]
+        sum_logdet_jacobian = torch.zeros(bz)
+
         if self.n_flows > 0:
             for flow_idx, flow_layer in enumerate(self.flow, start=0):
-                z = flow_layer(z, u[:, flow_idx, :, :], w[:, flow_idx, :, :], b[:, flow_idx, :, :])
+                if self.flow_type == 'planar':
+                    z, logdet_jacobian = flow_layer(z, u[:, flow_idx, :, :], w[:, flow_idx, :, :], b[:, flow_idx, :, :])
                 z_li.append(z)
+                sum_logdet_jacobian += logdet_jacobian
         else:
             z = self.flow(z)
 
         x_prime = self.decoder(z)
 
-        return x_prime, z_li, mu, logvar
+        return x_prime, z_li, mu, logvar, sum_logdet_jacobian
     
-    def free_energy_bound(self, x, z_li, mu, log_var, x_prime, beta=1.0):
+    def free_energy_bound(self, x, z_li, mu, log_var, x_prime, sum_logdet_jacobian, beta=1.0):
         # Beta is inverse termperature for annealed flow-based free energy bound
+        # Expectation by Monte Carlo Sampling (one sample per data point) if term doesn't have analytic form.
 
-        # VAE Case, Free Energy Bound(-ELBO) (n_flows == 0)
-        if self.n_flows == 0:
-            # 1) E_{q_0(z_0)}[ln q_0(z_0)]
-            first_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).entropy()
-            first_term = torch.sum(first_term, dim=-1).mean() # Batch-wise mean
+        # 1) E_{q_0(z_0)}[ln q_0(z_0)]
+        first_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).entropy()
+        first_term = torch.sum(first_term, dim=-1).mean() # Batch-wise mean
 
-            # 2) -E_{q_0(z_0)}[log p(z_0)]
-            z_0 = z_li[0]
-            second_term = -Normal(loc=torch.zeros_like(z_0), scale=torch.ones_like(z_0)).log_prob(z_0)
-            second_term = torch.sum(second_term, dim=-1).mean() # Batch-wise mean
+        # 2) Reconstruction
+        n = x.size(0)
+        second_term = F.binary_cross_entropy(x_prime, x, reduction='sum') / n
 
-            # 3) Reconstruction
-            n = x.size(0)
-            third_term = F.binary_cross_entropy(x_prime, x, reduction='sum') / n
+        # 3) -E_{q_0(z_0)}[log p(z_k)]
+        # if n_flows = 0, -E_{q_0(z_0)}[log p(z_0)]
+        z_k = z_li[-1] # if n_flows = 0, z_k == z_0
+        third_term = -Normal(loc=torch.zeros_like(z_k), scale=torch.ones_like(z_k)).log_prob(z_k)
+        third_term = torch.sum(third_term, dim=-1).mean() # Batch-wise mean
 
-            loss = first_term + beta*(third_term + second_term)
+        loss = first_term + beta*(second_term + third_term)
 
-        # Normalizing Flow Case, Flow-based Free Energy Bound (n_flows > 0)
-        elif self.n_flows > 0:
-            if beta is None: beta = 1.0
+        # 4) Flow correction
+        fourth_term = -sum_logdet_jacobian.mean() # Batch-wise mean 
 
-            # Expectation by Monte Carlo Sampling (one sample per data point)
-
-            # 1) E_{q_0(z_0)}[ln q_0(z_0)]
-            first_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).entropy()
-            first_term = torch.sum(first_term, dim=-1).mean() # Batch-wise mean
-
-            # 2) Reconstruction
-            n = x.size(0)
-            second_term = F.binary_cross_entropy(x_prime, x, reduction='sum') / n
-
-            # 3) -E_{q_0(z_0)}[log p(z_K)]
-            z_K = z_li[-1]
-            third_term = -Normal(loc=torch.zeros_like(z_K), scale=torch.ones_like(z_K)).log_prob(z_K)
-            third_term = torch.sum(third_term, dim=-1).mean() # Batch-wise mean
-
-            # 4) Flow correction
-            fourth_term = 0.
-            for flow_idx, z in enumerate(z_li, start=0):
-                if flow_idx == (len(z_li)-1): break
-
-                fourth_term -= self.flow[flow_idx].log_abs_det_jacobian(z).mean() # batch-wise mean
-
-            loss = first_term + beta*(second_term + third_term) + fourth_term
+        loss = first_term + beta*(second_term + third_term) + fourth_term
 
         return loss
     
     def neg_ln_p_x(self, x, samples=200):
         x = x.repeat(samples, 1) # (1, D) -> (samples, D)
-        x_prime, z_li, mu, log_var = self.forward(x)
+        x_prime, z_li, mu, log_var, sum_logdet_jacobian = self.forward(x)
 
-        if self.n_flows == 0:
-            first_term = -F.binary_cross_entropy(x_prime, x, reduction='none').sum(dim=1)
-            
-            second_term = Normal(loc=torch.zeros_like(z_li[0]), scale=torch.ones_like(z_li[0])).log_prob(z_li[0]).sum(dim=1)
+        first_term = -F.binary_cross_entropy(x_prime, x, reduction='none').sum(dim=1)
+        
+        second_term = Normal(loc=torch.zeros_like(z_li[-1]), scale=torch.ones_like(z_li[-1])).log_prob(z_li[-1]).sum(dim=1)
 
-            third_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).log_prob(z_li[0]).sum(dim=1)
-            
-            w = first_term + second_term + third_term
-            neg_ln_p_x = -torch.logsumexp(w, dim=0) + torch.log(torch.tensor(float(samples)))
+        third_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).log_prob(z_li[0]).sum(dim=1)
 
-        elif self.n_flows > 0:
-            first_term = -F.binary_cross_entropy(x_prime, x, reduction='none').sum(dim=1)
-            
-            second_term = Normal(loc=torch.zeros_like(z_li[-1]), scale=torch.ones_like(z_li[-1])).log_prob(z_li[-1]).sum(dim=1)
-
-            third_term = -Normal(loc=mu, scale=log_var.mul(0.5).exp()).log_prob(z_li[0]).sum(dim=1)
-
-            fourth_term = torch.zeros_like(first_term)
-            for flow_idx, z in enumerate(z_li, start=0):
-                if flow_idx == (len(z_li)-1): break
-
-                fourth_term += self.flow[flow_idx].log_abs_det_jacobian(z)
-            
-            w = first_term + second_term + third_term + fourth_term
-            neg_ln_p_x = -torch.logsumexp(w, dim=0) + torch.log(torch.tensor(float(samples)))
+        fourth_term = sum_logdet_jacobian
+        
+        w = first_term + second_term + third_term + fourth_term
+        neg_ln_p_x = -torch.logsumexp(w, dim=0) + torch.log(torch.tensor(float(samples)))
         
         return neg_ln_p_x
     
@@ -159,20 +132,3 @@ class NormalizingFlow(nn.Module):
                    latent_dim=cfg['latent_dim'],
                    maxout_window_size=cfg['maxout_window_size'],
                    n_flows=cfg['n_flows'])
-    
-if __name__ == "__main__":
-    model = NormalizingFlow(input_dim=784,
-                            hidden_dim=400,
-                            latent_dim=40,
-                            maxout_window_size=4,
-                            n_flows=40,
-                            flow_type='planar')
-    x = torch.ones(1, 784)
-    x_prime, z_li, mu, logvar = model(x)
-    print("x_prime:", x_prime.shape)
-    print("mu:", mu.shape)
-    print("logvar:", logvar.shape)
-    print("Number of z in z_li:", len(z_li))
-
-    model.free_energy_bound(x, z_li, mu, logvar, x_prime)
-    print(model.neg_ln_p_x(x, samples=200).shape)

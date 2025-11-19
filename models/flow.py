@@ -33,23 +33,31 @@ class PlanarFlow(nn.Module):
             f_z = z + u_hat * f_z # (B, D) + (B, D)
             f_z = f_z.squeeze(2)
 
+            logdet_jacobian = self.log_abs_det_jacobian(z, u_hat, w, b)
         else:
             f_z = z + u * f_z
             f_z = f_z.squeeze(2)
 
-        return f_z
+            logdet_jacobian = self.log_abs_det_jacobian(z, u, w, b)
+
+        logdet_jacobian = logdet_jacobian.squeeze(1).squeeze(1)
+        
+        return f_z, logdet_jacobian
     
     def diff_tanh(self, x):
         return 1 - torch.tanh(x) ** 2
     
     def log_abs_det_jacobian(self, z, u=None, w=None, b=None):
-        psi_z = self.diff_tanh((z @ w) + b).unsqueeze(-1) * w # (B, D)
+        '''
+        z: (B, D, 1), already squeezed in forward function, before call this function
+        u(u_hat): (B, D, 1)
+        w: (B, 1, D)
+        b: (B, 1, 1)
+        '''
 
-        if self.invertibility_condition == True:
-            u_hat = self.get_uhat(w, u)
-            log_abs_det = torch.log(torch.abs(1 + (psi_z @ u_hat)))
-        else:
-            log_abs_det = torch.log(torch.abs(1 + (psi_z @ u)))
+        psi_z = self.diff_tanh(torch.bmm(w, z) + b) * w # (B, 1, D)
+
+        log_abs_det = torch.log(torch.abs(1 + (torch.bmm(psi_z, u)))) # (B, 1, 1)
 
         return log_abs_det
 

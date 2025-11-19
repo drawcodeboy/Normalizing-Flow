@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-from einops import rearrange
 
 class InferenceNetwork(nn.Module):
     '''
@@ -11,19 +10,24 @@ class InferenceNetwork(nn.Module):
                  hidden_dim: int = 400,
                  latent_dim: int = 40,
                  maxout_window_size: int = 4,
-                 n_flows: int = 0):
+                 n_flows: int = 0,
+                 flow_type: str = 'planar'):
         super().__init__()
         
         self.maxout_window_size = maxout_window_size
         self.n_flows = n_flows
         self.latent_dim = latent_dim
+        self.flow_type = flow_type
 
         self.li1 = nn.Linear(input_dim, hidden_dim*maxout_window_size)
         self.li2_mu = nn.Linear(hidden_dim, latent_dim)
         self.li2_logvar = nn.Linear(hidden_dim, latent_dim)
-        self.li2_u = nn.Linear(hidden_dim, self.n_flows * latent_dim)
-        self.li2_w = nn.Linear(hidden_dim, self.n_flows * latent_dim)
-        self.li2_b = nn.Linear(hidden_dim, self.n_flows)
+
+        # Planar Flow Parameters
+        if self.n_flows and self.flow_type == 'planar':
+            self.li2_u = nn.Linear(hidden_dim, self.n_flows * latent_dim)
+            self.li2_w = nn.Linear(hidden_dim, self.n_flows * latent_dim)
+            self.li2_b = nn.Linear(hidden_dim, self.n_flows)
 
     def maxout(self, x):
         '''
@@ -43,9 +47,12 @@ class InferenceNetwork(nn.Module):
         mu = self.li2_mu(h)
         logvar = self.li2_logvar(h)
 
-        bz = x.size(0)
-        u = self.li2_u(h).view(bz, self.n_flows, self.latent_dim, 1)
-        w = self.li2_w(h).view(bz, self.n_flows, 1, self.latent_dim)
-        b = self.li2_b(h).view(bz, self.n_flows, 1, 1)
+        if self.n_flows > 0 and self.flow_type == 'planar':
+            bz = x.size(0)
+            u = self.li2_u(h).view(bz, self.n_flows, self.latent_dim, 1)
+            w = self.li2_w(h).view(bz, self.n_flows, 1, self.latent_dim)
+            b = self.li2_b(h).view(bz, self.n_flows, 1, 1)
 
-        return mu, logvar, u, w, b
+            return mu, logvar, u, w, b
+        else:
+            return mu, logvar
