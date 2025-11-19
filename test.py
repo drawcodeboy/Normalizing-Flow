@@ -63,8 +63,8 @@ def main(cfg):
                 x = data
                 x = x.to(device)
 
-                x_prime, z_li, mu, log_var = model(x)
-                feb = model.free_energy_bound(x, z_li, mu, log_var, x_prime, beta=1.0)
+                x_prime, z_li, mu, log_var, sum_logdet_jacobian = model(x)
+                feb = model.free_energy_bound(x, z_li, mu, log_var, x_prime, sum_logdet_jacobian, beta=1.0)
                 feb_li.append(feb.item())
             else:
                 raise Exception("Check your task_cfg['object'] configuration")

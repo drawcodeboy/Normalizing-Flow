@@ -76,8 +76,8 @@ def main(cfg):
                 x = data
                 x = x.to(device)
 
-                x_prime, z_li, mu, log_var = model(x)
-                loss = model.free_energy_bound(x, z_li, mu, log_var, x_prime, beta=beta)
+                x_prime, z_li, mu, log_var, sum_logdet_jacobian = model(x)
+                loss = model.free_energy_bound(x, z_li, mu, log_var, x_prime, sum_logdet_jacobian, beta=beta)
 
                 loss.backward()
                 optimizer.step()
