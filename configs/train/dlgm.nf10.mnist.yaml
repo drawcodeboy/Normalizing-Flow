@@ -1,6 +1,6 @@
 title: Train Normalizing Flow (DLGM + NF k=10) on Binarized MNIST
 
-device: &device cuda:0
+device: &device cuda:1
 parallel: false
 
 task:

@@ -1,6 +1,6 @@
 title: Test Normalizing Flow (DLGM + Diagonal NF k=10) on Binarized MNIST
 
-device: &device cuda:0
+device: &device cuda:1
 parallel: false
 
 task:
@@ -27,4 +27,4 @@ hyperparameters:
 
 save:
   weights_path: saved/weights
-  weights_filename: dlgm.nf10.mnist.updates_200000.pth
+  weights_filename: dlgm.nf10.mnist.updates_500000.pth
