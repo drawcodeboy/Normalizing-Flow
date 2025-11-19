@@ -1,5 +1,5 @@
 # Normalizing Flow
-* Implementation of <b><i><a href="https://arxiv.org/abs/1505.05770">Variational Inference with Normalizing Flows</a></i></b> with PyTorch
+* Reproduction of <b><i><a href="https://arxiv.org/abs/1505.05770">Variational Inference with Normalizing Flows</a></i></b> with PyTorch
 # Settings
 ```
 conda create -n nf python=3.12
@@ -9,7 +9,12 @@ pip install -r requirements.txt
 python train.py --config=dlgm.nf10.mnist
 python test.py --config=dlgm.nf10.mnist
 ```
-# Results
+
+# Results (Latest)
+* Is it stable?
+* Referece link: https://github.com/andrehuang/normalizing-flows-reproduce
+
+# Results / Limitation & Report (25.11.16)
 <table align="center">
   <tr>
     <td align="center">
@@ -31,7 +36,6 @@ python test.py --config=dlgm.nf10.mnist
   </tr>
 </table>
 
-# Limitation & Report
 * The performance difference from the original paper is shown in the Results section. In my implementation, the performance gain from adding Flow is smaller than what the original paper reports. To understand this discrepancy, I reviewed the paper again and identified one key difference: in the original implementation, the parameters of each Flow are generated from the output of the Inference Network <i>(in Sec 4.2.)</i>. Aside from this point, I am confident that the rest of my implementation follows the paper faithfully.
 * This means the original paper uses flow-specific parameters conditioned on the encoder output, whereas my implementation uses separate learnable parameters for each Flow. While examining this detail, I made an interesting finding: <b> for Planar Flow, the choice of weight initialization has a critical impact when tanh is used as the nonlinearity. </b> The reasons are as follows.
 
