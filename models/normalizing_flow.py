@@ -66,7 +66,7 @@ class NormalizingFlow(nn.Module):
         z = self.reparameterize(mu, logvar)
 
         z_li = [z]
-        sum_logdet_jacobian = torch.zeros(bz)
+        sum_logdet_jacobian = torch.zeros(bz, device=x.device)
 
         if self.n_flows > 0:
             for flow_idx, flow_layer in enumerate(self.flow, start=0):
