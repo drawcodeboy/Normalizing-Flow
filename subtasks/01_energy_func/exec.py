@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-def energy_func(z: np.array, order: int):
+def energy_func_value(z: np.array, order: int):
     '''
         z: np.array (2,)
         z1 = y-axis, z2 = x-axis
@@ -18,13 +18,16 @@ def energy_func(z: np.array, order: int):
 
     return result
 
-height, width = 256, 256
+def energy_func(order: int):
+    height, width = 256, 256
 
-array = np.zeros((height, width))
+    array = np.zeros((height, width))
 
-for i, w in enumerate(np.linspace(start=-4, stop=4, num=height)):
-    for j, h in enumerate(np.linspace(start=-4, stop=4, num=width)):
-        array[i][j] = energy_func(np.array([h, w]), order =2)
+    for i, w in enumerate(np.linspace(start=-4, stop=4, num=height)):
+        for j, h in enumerate(np.linspace(start=-4, stop=4, num=width)):
+            array[i][j] = energy_func_value(np.array([h, w]), order=order)
 
-plt.imshow(array, cmap='jet')
+    return array
+
+plt.imshow(energy_func(1), cmap='jet')
 plt.savefig('subtasks/01_energy_func/output.png', dpi=500)
