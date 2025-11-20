@@ -1,0 +1,30 @@
+title: Test Normalizing Flow (DLGM + Diagonal NF k=80) on Binarized MNIST
+
+device: &device cuda:0
+parallel: false
+
+task:
+  object: test_nf
+
+data:
+  test:
+    name: binarized_mnist
+    root: data/
+    download: true
+    mode: test
+
+model:
+  name: normalizing_flow
+  input_dim: 784
+  hidden_dim: 400
+  latent_dim: 40
+  maxout_window_size: 4
+  n_flows: 80
+  flow_type: planar
+
+hyperparameters:
+  batch_size: 200
+
+save:
+  weights_path: saved/weights
+  weights_filename: dlgm.nf80.mnist.updates_500000.pth

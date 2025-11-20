@@ -10,11 +10,11 @@ def main():
     plt.subplot(1, 3, 1)
     plt.grid(zorder=0)
     plt.xlim([0-margin, 80+margin])
-    plt.ylim([90, 100])
+    plt.ylim([72, 81])
     plt.xlabel('Flow length')
     plt.ylabel('Variational Bound (nats)')
 
-    results = [98.899417, 98.169727, 97.990917]
+    results = [80.212316, 76.534312, 75.348011]
     plt.plot(flow_length, results, label='NF', color='blue', zorder=1)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
@@ -23,11 +23,11 @@ def main():
     plt.subplot(1, 3, 3)
     plt.grid(zorder=0)
     plt.xlim([0-margin, 80+margin])
-    plt.ylim([85, 95])
+    plt.ylim([65, 74])
     plt.xlabel('Flow length')
     plt.ylabel('-log-likelihood (nats)')
 
-    results = [92.969014, 92.527528, 92.266818]
+    results = [73.487994, 70.251709, 69.439229]
     plt.plot(flow_length, results, label='NF', color='blue', zorder=1)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
@@ -36,11 +36,11 @@ def main():
     plt.subplot(1, 3, 2)
     plt.grid(zorder=0)
     plt.xlim([0-margin, 80+margin])
-    plt.ylim([4, 8])
+    plt.ylim([5, 7])
     plt.xlabel('Flow length')
     plt.ylabel('KL(q;truth) (nats)')
 
-    results = [5.930403, 5.642199, 5.724099]
+    results = [6.724323, 6.282603, 5.908781]
     plt.plot(flow_length, results, label='NF', color='blue', zorder=1)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
