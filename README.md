@@ -11,7 +11,6 @@ python test.py --config=dlgm.nf10.mnist
 ```
 
 # Results / Report (Latest:25.11.20)
-* Is it stable?
 <table align="center">
   <tr>
     <td align="center">
@@ -21,6 +20,11 @@ python test.py --config=dlgm.nf10.mnist
   </tr>
 </table>
 
+### 1. Why is the absolute performance better than that reported in the paper?
+
+### 2. Why does the inference network predict the flow parameters?
+
+### 3. Why do I no longer need to consider issues like weight initialization that arose in the previous case?
 
 # Results / Limitation & Report (25.11.16)
 <table align="center">
@@ -62,7 +66,7 @@ python test.py --config=dlgm.nf10.mnist
         * A log-det Jacobian that is too small leads to extremely small gradient magnitudes, slowing or preventing learning:
         $$\frac{\partial}{\partial\mathbf{u}}\log\vert1+\mathbf{u}^\top\psi(\mathbf{z})\vert=\frac{\psi(\mathbf{z})}{1+0}=\psi(\mathbf{z})$$
         * When $\mathbf{w}$ is too small, $\psi(\mathbf{z})$ is small as well, causing the gradient to shrink.
-* Given that each Flow has its own parameters, <a href="https://github.com/VincentStimper/normalizing-flows">a repository</a> with an implementation similar to mine initializes the weights using a scheme similar to Xavier initialization. I applied the same strategy, and the difference between the initialized model (a) and the non-initialized model (b) shows a clear performance gap. <b>This supports the finding that weight initialization plays a critical role in the effectiveness of Planar Flow.</b>
+* Given that each Flow has its own parameters, <a href="https://github.com/VincentStimper/normalizing-flows">a repository</a> with an implementation similar to mine initializes the weights using a scheme similar to Xavier initialization. I applied the same strategy, and the difference between the initialized model (a) and the non-initialized model (b) shows a clear performance gap. <u><b>This supports the finding that weight initialization plays a critical role in the effectiveness of Planar Flow.</b></u>
 * I believe that generating the parameters of each flow using the inference network (i.e., adopting a Hypernetwork-like structure) can make training highly unstable. For this reason, I still don’t fully understand why the original papers chose this approach or how they ensured stable learning. If anyone has a clear explanation or practical insights, please leave an issue here or email me at dobylive01@gmail.com
 . It would be a huge help.
   
