@@ -19,7 +19,7 @@ def main():
     plt.ylabel('Variational Bound (nats)')
 
     results = [79.245757, 74.383364, 72.867311, 72.572694]
-    plt.plot(flow_length, results, label='NF', color='blue', zorder=2)
+    plt.plot(flow_length, results, label='NF (Planar)', color='blue', zorder=2)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
 
@@ -33,7 +33,7 @@ def main():
     plt.ylabel('-log-likelihood (nats)')
 
     results = [71.435740, 67.540135, 66.435476, 66.265410]
-    plt.plot(flow_length, results, label='NF', color='blue', zorder=2)
+    plt.plot(flow_length, results, label='NF (Planar)', color='blue', zorder=2)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
 
@@ -47,7 +47,7 @@ def main():
     plt.ylabel('KL(q;truth) (nats)')
 
     results = [7.810016, 6.843229, 6.431835, 6.307284]
-    plt.plot(flow_length, results, label='NF', color='blue', zorder=2)
+    plt.plot(flow_length, results, label='NF (Planar)', color='blue', zorder=2)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
 
