@@ -8,40 +8,40 @@ def main():
 
     # (1) Free Energy Bound vs Flow Length
     plt.subplot(1, 3, 1)
-    plt.grid(zorder=0)
+    plt.grid(zorder=1)
     plt.xlim([0-margin, 80+margin])
     plt.ylim([90, 100])
     plt.xlabel('Flow length')
     plt.ylabel('Variational Bound (nats)')
 
     results = [95.338399, 94.834667]
-    plt.plot(flow_length, results, label='NF', color='blue', zorder=1)
+    plt.plot(flow_length, results, label='NF', color='blue', zorder=2)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
 
     # (3) -log-likelihood (nats)
     plt.subplot(1, 3, 3)
-    plt.grid(zorder=0)
+    plt.grid(zorder=1)
     plt.xlim([0-margin, 80+margin])
     plt.ylim([85, 95])
     plt.xlabel('Flow length')
     plt.ylabel('-log-likelihood (nats)')
 
     results = [89.247592, 88.896626]
-    plt.plot(flow_length, results, label='NF', color='blue', zorder=1)
+    plt.plot(flow_length, results, label='NF', color='blue', zorder=2)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
 
     # (2) KL(q;truth) (nats)
     plt.subplot(1, 3, 2)
-    plt.grid(zorder=0)
+    plt.grid(zorder=1)
     plt.xlim([0-margin, 80+margin])
     plt.ylim([4, 8])
     plt.xlabel('Flow length')
     plt.ylabel('KL(q;truth) (nats)')
 
     results = [6.090807, 5.938041]
-    plt.plot(flow_length, results, label='NF', color='blue', zorder=1)
+    plt.plot(flow_length, results, label='NF', color='blue', zorder=2)
     plt.scatter(flow_length, results, marker='s', color='blue', zorder=2)
     plt.legend()
 
