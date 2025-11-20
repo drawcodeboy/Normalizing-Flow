@@ -9,7 +9,7 @@ def main():
     plt.subplot(1, 3, 1)
     plt.grid(zorder=1)
     plt.xlim([0-margin, 80+margin])
-    plt.ylim([90, 97])
+    plt.ylim([72, 81])
     plt.xlabel('Flow length')
     plt.ylabel('Variational Bound (nats)')
 
@@ -22,7 +22,7 @@ def main():
     plt.subplot(1, 3, 3)
     plt.grid(zorder=1)
     plt.xlim([0-margin, 80+margin])
-    plt.ylim([85, 91])
+    plt.ylim([65, 74])
     plt.xlabel('Flow length')
     plt.ylabel('-log-likelihood (nats)')
 
@@ -35,7 +35,7 @@ def main():
     plt.subplot(1, 3, 2)
     plt.grid(zorder=1)
     plt.xlim([0-margin, 80+margin])
-    plt.ylim([4, 7])
+    plt.ylim([5, 7])
     plt.xlabel('Flow length')
     plt.ylabel('KL(q;truth) (nats)')
 
