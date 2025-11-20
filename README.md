@@ -1,5 +1,5 @@
 # Normalizing Flow
-* Reproduction of <b><i><a href="https://arxiv.org/abs/1505.05770">Variational Inference with Normalizing Flows</a></i></b> with PyTorch
+* Reproduction of <b><i><a href="https://arxiv.org/abs/1505.05770">[Variational Inference with Normalizing Flows]</a></i></b> with PyTorch
 # Settings
 ```
 conda create -n nf python=3.12
@@ -10,9 +10,17 @@ python train.py --config=dlgm.nf10.mnist
 python test.py --config=dlgm.nf10.mnist
 ```
 
-# Results (Latest)
+# Results / Report (Latest:25.11.20)
 * Is it stable?
-* Referece link: https://github.com/andrehuang/normalizing-flows-reproduce
+<table align="center">
+  <tr>
+    <td align="center">
+      <img src="assets/figure_4.jpg" width="500"><br>
+      <em>(a) This repo's result (Flow length 0, 10, 20, 40)</em>
+    </td>
+  </tr>
+</table>
+
 
 # Results / Limitation & Report (25.11.16)
 <table align="center">
@@ -36,7 +44,7 @@ python test.py --config=dlgm.nf10.mnist
   </tr>
 </table>
 
-* The performance difference from the original paper is shown in the Results section. In my implementation, the performance gain from adding Flow is smaller than what the original paper reports. To understand this discrepancy, I reviewed the paper again and identified one key difference: in the original implementation, the parameters of each Flow are generated from the output of the Inference Network <i>(in Sec 4.2.)</i>. Aside from this point, I am confident that the rest of my implementation follows the paper faithfully.
+* The performance difference from the original paper is shown in the figure above. In my implementation, the performance gain from adding Flow is smaller than what the original paper reports. To understand this discrepancy, I reviewed the paper again and identified one key difference: in the original implementation, <u><b>the parameters of each Flow are generated from the output of the Inference Network</b></u> <i>(in Sec 4.2.)</i>. Aside from this point, I am confident that the rest of my implementation follows the paper faithfully.
 * This means the original paper uses flow-specific parameters conditioned on the encoder output, whereas my implementation uses separate learnable parameters for each Flow. While examining this detail, I made an interesting finding: <b> for Planar Flow, the choice of weight initialization has a critical impact when tanh is used as the nonlinearity. </b> The reasons are as follows.
 
     - The term $\mathbf{w}^\top\mathbf{z}$ always passes through the nonlinearity $h(\cdot)$ and its derivative $h'(\cdot)$ for both forward computation and the log-det Jacobian. With $h(\cdot)=\text{tanh}$, the useful gradient region is limited.
@@ -57,9 +65,17 @@ python test.py --config=dlgm.nf10.mnist
 * Given that each Flow has its own parameters, <a href="https://github.com/VincentStimper/normalizing-flows">a repository</a> with an implementation similar to mine initializes the weights using a scheme similar to Xavier initialization. I applied the same strategy, and the difference between the initialized model (a) and the non-initialized model (b) shows a clear performance gap. <b>This supports the finding that weight initialization plays a critical role in the effectiveness of Planar Flow.</b>
 * I believe that generating the parameters of each flow using the inference network (i.e., adopting a Hypernetwork-like structure) can make training highly unstable. For this reason, I still don’t fully understand why the original papers chose this approach or how they ensured stable learning. If anyone has a clear explanation or practical insights, please leave an issue here or email me at dobylive01@gmail.com
 . It would be a huge help.
+  
+  * I solved this problem and now understand why the flow parameters depend on the inference network output. Please refer to the recent [results (25.11.20)](#results--report-latest251120) for details.
 
 # References
+
+* Repositories
+  
+  1. <a href="https://github.com/VincentStimper/normalizing-flows">VincentStimper/normalizing-flows</a>
+  2. <a href="https://github.com/andrehuang/normalizing-flows-reproduce">andrehuang/normalizing-flows-reproduce</a>
 ```
+# Proceedings
 @inproceedings{rezende2015variational,
     title={Variational inference with normalizing flows},
     author={Rezende, Danilo and Mohamed, Shakir},
