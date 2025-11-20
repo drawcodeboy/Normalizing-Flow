@@ -57,7 +57,7 @@ def main(cfg):
     task_cfg = cfg['task']
     save_cfg = cfg['save']
 
-    # Training loss
+    # Train
     start_time = int(time.time())
     
     update_count = 0
