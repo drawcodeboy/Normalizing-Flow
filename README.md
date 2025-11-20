@@ -101,3 +101,6 @@ python test.py --config=dlgm.nf10.mnist
     organization={ACM}
 }
 ```
+
+# To Do
+* I want to replicate the experiment in Fig. 3 (<i>Representative Power of Normalizing Flow</i>) from the original paper. However, there are many concepts I need to review first. Since there is <a href="https://github.com/andrehuang/normalizing-flows-reproduce">a reference repository</a> for the implementation, I definitely want to try it later.
