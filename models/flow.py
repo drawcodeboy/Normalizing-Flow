@@ -74,10 +74,3 @@ class PlanarFlow(nn.Module):
         # ((m_wu - w_u) * w) / w_norm_square : (B, 1, D)
         u_hat = u + (((m_wu - w_u) * w) / w_norm_square).permute(0, 2, 1)
         return u_hat
-
-if __name__ == '__main__':
-    flow = PlanarFlow(latent_dim=40)
-    z = torch.randn(16, 40) 
-    z_transformed = flow(z)
-
-    flow.log_abs_det_jacobian(z)
