@@ -10,7 +10,7 @@ python train.py --config=dlgm.nf10.mnist
 python test.py --config=dlgm.nf10.mnist
 ```
 
-# Results / Report (Latest:25.11.20)
+# Results / Report (Latest:25.11.20, v1.0.0)
 <table align="center">
   <tr>
     <td align="center">
@@ -34,7 +34,7 @@ python test.py --config=dlgm.nf10.mnist
   <tr>
     <td align="center">
       <img src="assets/figure_4_.jpg" width="700"><br>
-      <em>(a) This repo's result (Flow length 0, 10, 20, 40)</em>
+      <em>(a) This repo's result (Flow length 0, 10, 20, 40, 80)</em>
     </td>
   </tr>
   <tr>
