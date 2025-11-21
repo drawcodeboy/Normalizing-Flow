@@ -15,7 +15,7 @@ python test.py --config=dlgm.nf10.mnist
   <tr>
     <td align="center">
       <img src="assets/figure_4.jpg" width="700"><br>
-      <em>(a) This repo's result (Flow length 0, 10, 20, 40)</em>
+      <em>(a) This repo's result (Flow length 0, 10, 20, 40, 80)</em>
     </td>
   </tr>
 </table>
@@ -34,7 +34,7 @@ python test.py --config=dlgm.nf10.mnist
   <tr>
     <td align="center">
       <img src="assets/figure_4_.jpg" width="700"><br>
-      <em>(a) This repo's result (Flow length 0, 10, 20, 40, 80)</em>
+      <em>(a) This repo's result (Flow length 0, 10, 20, 40)</em>
     </td>
   </tr>
   <tr>
